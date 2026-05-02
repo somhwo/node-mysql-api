@@ -6,7 +6,6 @@ import authorize from '../_middleware/authorize';
 import Role from '../_helpers/role';
 import accountService from './account.service';
 
-// routes
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
@@ -63,6 +62,21 @@ function revokeTokenSchema(req: any, res: any, next: any) {
 function revokeToken(req: any, res: any, next: any) {
     const token = req.body.token || req.cookies.refreshToken;
     const ipAddress = req.ip;
+
+     // ADD THESE LINES 👇
+    console.log('token:', token);
+    console.log('user:', req.user);
+    console.log('ownsToken:', req.user?.ownsToken(token));
+
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+
+    if (!req.user.ownsToken(token) && req.user.role !== Role.Admin) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    accountService.revokeToken({ token, ipAddress })
+        .then(() => res.json({ message: 'Token revoked' }))
+        .catch(next);
 
     if (!token) return res.status(400).json({ message: 'Token is required' });
 
@@ -155,7 +169,6 @@ function getAll(req: any, res: any, next: any) {
 }
 
 function getById(req: any, res: any, next: any) {
-    // users can get their own account and admins can get any account
     if (Number(req.params.id) !== req.user.id && req.user.role !== Role.Admin) {
         return res.status(401).json({ message: 'Unauthorized' });
     }
@@ -225,7 +238,7 @@ function _delete(req: any, res: any, next: any) {
 function setTokenCookie(res: any, token: any) {
     const cookieOptions = {
         httpOnly: true,
-        expires: new Date(Date.now() + 7*24*60*60*1000)
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     };
     res.cookie('refreshToken', token, cookieOptions);
 }

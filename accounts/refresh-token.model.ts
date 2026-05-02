@@ -2,13 +2,13 @@ import { DataTypes } from 'sequelize';
 
 export default function model(sequelize: any) {
     const attributes = {
-        token: { type: DataTypes.STRING },
+        token: { type: DataTypes.STRING(512) },
         expires: { type: DataTypes.DATE },
         created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         createdByIp: { type: DataTypes.STRING },
         revoked: { type: DataTypes.DATE },
         revokedByIp: { type: DataTypes.STRING },
-        replacedByToken: { type: DataTypes.STRING },
+        replacedByToken: { type: DataTypes.STRING(512) },
         isExpired: {
             type: DataTypes.VIRTUAL,
             get() { return Date.now() >= this.expires; }
@@ -20,6 +20,5 @@ export default function model(sequelize: any) {
     };
 
     const options = { timestamps: false };
-
     return sequelize.define('refreshToken', attributes, options);
 }

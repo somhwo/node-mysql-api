@@ -44,7 +44,7 @@ async function authenticate({ email, password, ipAddress }: any) {
 
 async function refreshToken({ token, ipAddress }: any) {
     const refreshToken = await getRefreshToken(token);
-    const account = await refreshToken.getAccount();
+    const account = await db.Account.findByPk(refreshToken.accountId);
 
     const newRefreshToken = generateRefreshToken(account, ipAddress);
     refreshToken.revoked = Date.now();
@@ -104,7 +104,7 @@ async function forgotPassword({ email }: any, origin: any) {
     if (!account) return;
 
     account.resetToken = randomTokenString();
-    account.resetTokenExpires = new Date(Date.now() + 24*60*60*1000);
+    account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
 
     await sendPasswordResetEmail(account, origin);
@@ -180,6 +180,8 @@ async function _delete(id: any) {
     await account.destroy();
 }
 
+// helper functions
+
 async function getAccount(id: any) {
     const account = await db.Account.findByPk(id);
     if (!account) throw 'Account not found';
@@ -204,7 +206,7 @@ function generateRefreshToken(account: any, ipAddress: any) {
     return new db.RefreshToken({
         accountId: account.id,
         token: randomTokenString(),
-        expires: new Date(Date.now() + 7*24*60*60*1000),
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdByIp: ipAddress
     });
 }
